@@ -2,36 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0b0d10">
+<meta name="description" content="HEMTON.AI - Your intelligent AI assistant">
 <title>HEMTON.AI</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
 :root{
   --bg:#0b0d10;
+  --sidebar:#080a0d;
   --panel:#111419;
   --panel2:#171a20;
+  --hover:#20242b;
   --border:#292e37;
-  --text:#f2f3f5;
-  --muted:#9298a3;
-  --accent:#10a37f;
+  --text:#f4f5f7;
+  --muted:#9ba1ab;
+  --green:#10a37f;
+  --green2:#08775e;
 }
 
 html,body{
-  margin:0;
   width:100%;
   height:100%;
+  overflow:hidden;
   background:var(--bg);
   color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif;
 }
 
-body{
-  overflow:hidden;
+button,
+textarea,
+select{
+  font:inherit;
 }
+
+button{
+  cursor:pointer;
+}
+
+/* APP */
 
 .app{
+  width:100%;
   height:100vh;
   display:flex;
 }
@@ -40,48 +65,56 @@ body{
 
 .sidebar{
   width:270px;
-  background:#080a0d;
+  height:100vh;
+  background:var(--sidebar);
   border-right:1px solid var(--border);
   display:flex;
   flex-direction:column;
   padding:14px;
+  transition:transform .25s ease;
+  z-index:20;
 }
 
 .brand{
   display:flex;
   align-items:center;
   gap:11px;
-  padding:12px 8px 22px;
-  font-size:21px;
-  font-weight:bold;
+  padding:8px 6px 20px;
+  font-size:20px;
+  font-weight:750;
+  letter-spacing:-.4px;
 }
 
 .logo{
-  width:34px;
-  height:34px;
+  width:36px;
+  height:36px;
   border-radius:11px;
   display:grid;
   place-items:center;
-  background:linear-gradient(135deg,#19c99b,#08785f);
+  background:linear-gradient(145deg,#19d3a1,#075b49);
+  box-shadow:0 0 28px rgba(16,163,127,.28);
   color:white;
   font-weight:900;
-  box-shadow:0 0 22px #10a37f55;
 }
 
-.newchat{
+.new-chat{
   width:100%;
-  padding:12px;
   border:1px solid var(--border);
   background:var(--panel);
-  color:white;
-  border-radius:9px;
+  color:var(--text);
+  border-radius:10px;
+  padding:12px 13px;
   text-align:left;
-  font-size:14px;
-  cursor:pointer;
+  transition:.18s;
 }
 
-.newchat:hover{
-  background:var(--panel2);
+.new-chat:hover{
+  background:var(--hover);
+}
+
+.new-chat span{
+  margin-right:7px;
+  font-size:17px;
 }
 
 .history{
@@ -91,278 +124,557 @@ body{
 }
 
 .history-title{
-  color:#777e89;
-  font-size:12px;
   padding:8px;
+  color:#707782;
+  font-size:11px;
   text-transform:uppercase;
+  letter-spacing:.8px;
 }
 
-.chat-item{
-  padding:11px;
-  border-radius:8px;
-  color:#c8ccd2;
-  font-size:14px;
+.history-item{
+  padding:10px 11px;
   margin:3px 0;
+  border-radius:8px;
+  color:#c7cbd1;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
-.chat-item.active{
-  background:#191d23;
+.history-item:hover,
+.history-item.active{
+  background:var(--panel2);
   color:white;
 }
 
-.account{
+.sidebar-bottom{
   border-top:1px solid var(--border);
-  padding-top:14px;
-  color:#c8ccd2;
-  font-size:14px;
+  padding-top:13px;
+}
+
+.account{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px;
+  border-radius:9px;
+}
+
+.account:hover{
+  background:var(--panel);
+}
+
+.account-avatar{
+  width:31px;
+  height:31px;
+  border-radius:8px;
+  display:grid;
+  place-items:center;
+  background:#303640;
+  font-size:12px;
+}
+
+.account-text{
+  min-width:0;
+}
+
+.account-name{
+  font-size:13px;
+  font-weight:650;
+}
+
+.account-sub{
+  color:#777e88;
+  font-size:11px;
 }
 
 /* MAIN */
 
 .main{
   flex:1;
+  min-width:0;
+  height:100vh;
   display:flex;
   flex-direction:column;
-  min-width:0;
+  position:relative;
 }
+
+/* TOP BAR */
 
 .topbar{
   height:62px;
-  border-bottom:1px solid var(--border);
+  flex:none;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 22px;
-  background:#0c0e12;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:rgba(11,13,16,.92);
+  backdrop-filter:blur(12px);
+  z-index:5;
 }
 
-.model{
-  background:transparent;
+.top-left{
+  display:flex;
+  align-items:center;
+}
+
+.mobile-menu{
+  display:none;
   border:0;
+  background:transparent;
   color:white;
-  font-size:16px;
-  font-weight:bold;
+  font-size:22px;
+  margin-right:12px;
 }
 
-.menu{
-  color:#aaa;
-  font-size:21px;
+.model-select{
+  appearance:none;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:white;
+  font-size:15px;
+  font-weight:700;
+  padding:7px 27px 7px 7px;
+  cursor:pointer;
 }
 
-.messages{
+.model-wrap{
+  position:relative;
+}
+
+.model-wrap::after{
+  content:"⌄";
+  position:absolute;
+  right:5px;
+  top:4px;
+  color:#858b94;
+  pointer-events:none;
+}
+
+.top-right{
+  display:flex;
+  gap:5px;
+}
+
+.top-button{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#aab0b8;
+  font-size:19px;
+}
+
+.top-button:hover{
+  background:var(--hover);
+  color:white;
+}
+
+/* CHAT */
+
+.chat{
   flex:1;
-  overflow:auto;
-  padding:30px 18px 160px;
+  overflow-y:auto;
+  padding:20px 18px 165px;
+  scroll-behavior:smooth;
 }
+
+.chat-inner{
+  width:100%;
+  max-width:850px;
+  margin:0 auto;
+}
+
+/* WELCOME */
 
 .welcome{
-  max-width:760px;
-  margin:12vh auto 0;
+  min-height:calc(100vh - 250px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 0;
+}
+
+.welcome-inner{
+  width:100%;
   text-align:center;
 }
 
-.welcome-logo{
-  width:70px;
-  height:70px;
-  margin:auto;
-  border-radius:23px;
+.big-logo{
+  width:76px;
+  height:76px;
+  margin:0 auto 23px;
+  border-radius:25px;
   display:grid;
   place-items:center;
-  font-size:30px;
-  font-weight:bold;
-  background:linear-gradient(135deg,#13c99b,#075d4c);
-  box-shadow:0 0 45px #10a37f44;
-  animation:pulse 3s infinite;
+  font-size:31px;
+  font-weight:900;
+  background:linear-gradient(145deg,#19d3a1,#075b49);
+  box-shadow:
+    0 0 35px rgba(16,163,127,.25),
+    inset 0 1px rgba(255,255,255,.12);
+  animation:logoPulse 3s ease-in-out infinite;
 }
 
-@keyframes pulse{
-  0%,100%{box-shadow:0 0 30px #10a37f33}
-  50%{box-shadow:0 0 60px #10a37f77}
+@keyframes logoPulse{
+  0%,100%{
+    transform:translateY(0);
+    box-shadow:0 0 35px rgba(16,163,127,.22);
+  }
+  50%{
+    transform:translateY(-4px);
+    box-shadow:0 0 58px rgba(16,163,127,.38);
+  }
 }
 
 .welcome h1{
   font-size:34px;
-  margin:25px 0 10px;
+  letter-spacing:-1px;
+  margin-bottom:9px;
 }
 
 .welcome p{
   color:var(--muted);
-  font-size:16px;
+  font-size:15px;
 }
 
 .suggestions{
+  max-width:650px;
+  margin:34px auto 0;
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:1fr 1fr;
   gap:10px;
-  margin-top:35px;
 }
 
 .suggestion{
   border:1px solid var(--border);
   background:var(--panel);
   border-radius:12px;
-  padding:16px;
+  padding:15px;
   text-align:left;
-  color:#d6d9de;
-  cursor:pointer;
+  color:#d4d7dc;
+  transition:.18s;
 }
 
 .suggestion:hover{
-  background:var(--panel2);
+  background:var(--hover);
+  border-color:#3a414c;
+  transform:translateY(-1px);
 }
 
-/* MESSAGES */
+.suggestion-title{
+  font-size:14px;
+  font-weight:650;
+  margin-bottom:4px;
+}
+
+.suggestion-text{
+  color:#858c96;
+  font-size:12px;
+}
+
+/* MESSAGE */
 
 .message{
-  max-width:800px;
-  margin:0 auto;
   display:flex;
-  gap:14px;
-  padding:22px 0;
+  gap:15px;
+  padding:24px 0;
+  border-bottom:1px solid rgba(255,255,255,.025);
 }
 
-.avatar{
+.message-avatar{
   width:32px;
   height:32px;
   min-width:32px;
   border-radius:9px;
   display:grid;
   place-items:center;
-  font-size:13px;
-  font-weight:bold;
+  font-size:11px;
+  font-weight:800;
 }
 
-.user .avatar{
-  background:#3a3f48;
+.message.user .message-avatar{
+  background:#3b414b;
 }
 
-.ai .avatar{
-  background:linear-gradient(135deg,#16bd92,#08765d);
+.message.ai .message-avatar{
+  background:linear-gradient(145deg,#19c99b,#08775e);
+  box-shadow:0 0 18px rgba(16,163,127,.14);
 }
 
-.content{
-  line-height:1.65;
+.message-body{
+  min-width:0;
+  flex:1;
+}
+
+.message-name{
+  font-size:12px;
+  color:#858b94;
+  margin-bottom:6px;
+}
+
+.message-content{
+  color:#e9eaed;
   font-size:15px;
+  line-height:1.7;
   white-space:pre-wrap;
+  word-break:break-word;
 }
 
-/* INPUT */
+.message-actions{
+  margin-top:9px;
+  display:flex;
+  gap:4px;
+  opacity:.65;
+}
 
-.input-area{
-  position:fixed;
-  bottom:0;
-  left:270px;
+.action-button{
+  border:0;
+  background:transparent;
+  color:#8d949e;
+  padding:5px 7px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+.action-button:hover{
+  background:var(--hover);
+  color:white;
+}
+
+/* TYPING */
+
+.typing{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  height:22px;
+}
+
+.dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#9aa1aa;
+  animation:bounce 1.2s infinite;
+}
+
+.dot:nth-child(2){
+  animation-delay:.15s;
+}
+
+.dot:nth-child(3){
+  animation-delay:.3s;
+}
+
+@keyframes bounce{
+  0%,60%,100%{
+    transform:translateY(0);
+    opacity:.4;
+  }
+  30%{
+    transform:translateY(-5px);
+    opacity:1;
+  }
+}
+
+/* COMPOSER */
+
+.composer-area{
+  position:absolute;
+  left:0;
   right:0;
-  padding:18px 18px 25px;
-  background:linear-gradient(transparent,#0b0d10 30%);
+  bottom:0;
+  padding:18px 18px 24px;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(11,13,16,.85) 27%,
+      var(--bg) 55%
+    );
+  z-index:10;
 }
 
 .composer{
-  max-width:800px;
-  margin:auto;
+  width:100%;
+  max-width:850px;
+  margin:0 auto;
   background:#171a20;
-  border:1px solid #343943;
+  border:1px solid #353b45;
   border-radius:17px;
   display:flex;
   align-items:flex-end;
-  padding:10px;
-  box-shadow:0 8px 35px #00000066;
+  padding:8px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+  transition:border .2s, box-shadow .2s;
+}
+
+.composer:focus-within{
+  border-color:#4b535e;
+  box-shadow:0 12px 45px rgba(0,0,0,.45);
 }
 
 textarea{
   flex:1;
+  min-height:42px;
+  max-height:140px;
   resize:none;
   border:0;
   outline:0;
   background:transparent;
   color:white;
-  padding:10px;
+  padding:10px 9px;
+  line-height:1.45;
   font-size:15px;
-  max-height:130px;
-  min-height:42px;
 }
 
 textarea::placeholder{
-  color:#777e89;
+  color:#777e88;
 }
 
-.tool{
+.composer-button{
   width:40px;
   height:40px;
+  flex:none;
   border:0;
-  background:transparent;
-  color:#aeb4bd;
   border-radius:9px;
-  font-size:19px;
-  cursor:pointer;
+  background:transparent;
+  color:#a9afb8;
+  font-size:18px;
+  display:grid;
+  place-items:center;
 }
 
-.tool:hover{
-  background:#242830;
+.composer-button:hover{
+  background:#252a31;
+  color:white;
 }
 
-.send{
+.send-button{
+  background:#f3f4f5;
+  color:#0b0d10;
+  font-weight:900;
+}
+
+.send-button:hover{
   background:white;
-  color:#101216;
-  font-weight:bold;
+  color:#000;
 }
 
-.send:hover{
-  background:#ddd;
+.send-button:disabled{
+  opacity:.35;
+  cursor:not-allowed;
 }
 
 .disclaimer{
   text-align:center;
-  color:#666c75;
-  font-size:11px;
   margin-top:8px;
+  color:#626873;
+  font-size:10px;
+}
+
+/* MOBILE OVERLAY */
+
+.overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:15;
+}
+
+/* SCROLLBAR */
+
+::-webkit-scrollbar{
+  width:8px;
+}
+
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#30353d;
+  border-radius:10px;
 }
 
 /* MOBILE */
 
-.mobile-menu{
-  display:none;
-}
-
-@media(max-width:750px){
+@media(max-width:760px){
 
   .sidebar{
-    display:none;
+    position:fixed;
+    left:0;
+    top:0;
+    transform:translateX(-100%);
+    box-shadow:15px 0 45px rgba(0,0,0,.4);
+  }
+
+  .sidebar.open{
+    transform:translateX(0);
+  }
+
+  .overlay.open{
+    display:block;
   }
 
   .mobile-menu{
     display:block;
-    background:transparent;
-    border:0;
-    color:white;
-    font-size:22px;
-    margin-right:12px;
   }
 
   .topbar{
-    padding:0 14px;
+    padding:0 12px;
   }
 
-  .input-area{
-    left:0;
-    padding:10px 10px 17px;
+  .chat{
+    padding:15px 13px 160px;
   }
 
-  .messages{
-    padding-left:14px;
-    padding-right:14px;
+  .composer-area{
+    padding:10px 10px 16px;
   }
 
-  .welcome{
-    margin-top:10vh;
+  .suggestions{
+    grid-template-columns:1fr;
   }
 
   .welcome h1{
     font-size:28px;
   }
 
-  .suggestions{
-    grid-template-columns:1fr;
+  .welcome p{
+    font-size:14px;
+  }
+
+  .message{
+    gap:10px;
+    padding:19px 0;
+  }
+
+  .message-content{
+    font-size:14px;
+  }
+}
+
+@media(max-width:400px){
+
+  .big-logo{
+    width:65px;
+    height:65px;
+    border-radius:21px;
+  }
+
+  .welcome h1{
+    font-size:25px;
+  }
+
+  .model-select{
+    font-size:14px;
   }
 }
 </style>
@@ -372,147 +684,288 @@ textarea::placeholder{
 
 <div class="app">
 
-<aside class="sidebar">
+  <!-- SIDEBAR -->
 
-  <div class="brand">
-    <div class="logo">H</div>
-    HEMTON.AI
-  </div>
+  <aside class="sidebar" id="sidebar">
 
-  <button class="newchat" onclick="newChat()">
-    ＋ New chat
-  </button>
-
-  <div class="history">
-    <div class="history-title">Today</div>
-
-    <div class="chat-item active">
-      New conversation
+    <div class="brand">
+      <div class="logo">H</div>
+      <span>HEMTON.AI</span>
     </div>
 
-    <div class="chat-item">
-      Website ideas
+    <button class="new-chat" onclick="newChat()">
+      <span>＋</span> New chat
+    </button>
+
+    <div class="history">
+
+      <div class="history-title">Recent</div>
+
+      <div id="historyList">
+        <div class="history-item active">
+          New conversation
+        </div>
+      </div>
+
     </div>
 
-    <div class="chat-item">
-      Coding assistant
-    </div>
-  </div>
+    <div class="sidebar-bottom">
 
-  <div class="account">
-    ⚙ Settings<br><br>
-    HEMTON.AI
-  </div>
+      <div class="account">
 
-</aside>
-
-<main class="main">
-
-  <header class="topbar">
-
-    <div>
-      <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
-      <select class="model" id="model">
-        <option>HEMTON AI</option>
-        <option>HEMTON AI Pro</option>
-        <option>HEMTON Creative</option>
-      </select>
-    </div>
-
-    <div class="menu">⋯</div>
-
-  </header>
-
-  <section class="messages" id="messages">
-
-    <div class="welcome" id="welcome">
-
-      <div class="welcome-logo">H</div>
-
-      <h1>How can I help you?</h1>
-
-      <p>
-        Welcome to HEMTON.AI — your intelligent AI workspace.
-      </p>
-
-      <div class="suggestions">
-
-        <div class="suggestion"
-             onclick="usePrompt('Explain something to me in a simple way')">
-          💡 Explain something
+        <div class="account-avatar">
+          GC
         </div>
 
-        <div class="suggestion"
-             onclick="usePrompt('Help me write some code')">
-          💻 Help me code
-        </div>
-
-        <div class="suggestion"
-             onclick="usePrompt('Give me a creative idea for my project')">
-          ✨ Be creative
-        </div>
-
-        <div class="suggestion"
-             onclick="usePrompt('Help me plan my project')">
-          🚀 Plan a project
+        <div class="account-text">
+          <div class="account-name">
+            HEMTON User
+          </div>
+          <div class="account-sub">
+            HEMTON.AI
+          </div>
         </div>
 
       </div>
 
     </div>
 
-  </section>
+  </aside>
 
-</main>
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-<div class="input-area">
+  <!-- MAIN -->
 
-  <div class="composer">
+  <main class="main">
 
-    <button class="tool" title="Attach">＋</button>
+    <header class="topbar">
 
-    <textarea
-      id="input"
-      placeholder="Message HEMTON.AI..."
-      rows="1"
-      onkeydown="handleKey(event)"
-    ></textarea>
+      <div class="top-left">
 
-    <button class="tool" title="Voice" onclick="voiceInput()">
-      🎙
-    </button>
+        <button
+          class="mobile-menu"
+          onclick="toggleSidebar()">
+          ☰
+        </button>
 
-    <button class="tool send" onclick="sendMessage()">
-      ↑
-    </button>
+        <div class="model-wrap">
 
-  </div>
+          <select class="model-select" id="modelSelect">
+            <option>HEMTON AI</option>
+            <option>HEMTON AI Pro</option>
+            <option>HEMTON Creative</option>
+          </select>
 
-  <div class="disclaimer">
-    HEMTON.AI can make mistakes. Check important information.
-  </div>
+        </div>
 
-</div>
+      </div>
+
+      <div class="top-right">
+
+        <button
+          class="top-button"
+          title="New chat"
+          onclick="newChat()">
+          ＋
+        </button>
+
+      </div>
+
+    </header>
+
+    <!-- CHAT -->
+
+    <section class="chat" id="chat">
+
+      <div class="chat-inner" id="chatInner">
+
+        <!-- WELCOME -->
+
+        <div class="welcome" id="welcome">
+
+          <div class="welcome-inner">
+
+            <div class="big-logo">
+              H
+            </div>
+
+            <h1>
+              How can I help you?
+            </h1>
+
+            <p>
+              Your intelligent assistant, powered by HEMTON.AI
+            </p>
+
+            <div class="suggestions">
+
+              <button
+                class="suggestion"
+                onclick="useSuggestion('Explain something to me in a simple way')">
+
+                <div class="suggestion-title">
+                  💡 Explain something
+                </div>
+
+                <div class="suggestion-text">
+                  Learn a difficult topic simply
+                </div>
+
+              </button>
+
+              <button
+                class="suggestion"
+                onclick="useSuggestion('Help me write some code')">
+
+                <div class="suggestion-title">
+                  💻 Help me code
+                </div>
+
+                <div class="suggestion-text">
+                  Build or fix a programming project
+                </div>
+
+              </button>
+
+              <button
+                class="suggestion"
+                onclick="useSuggestion('Give me a creative idea for my project')">
+
+                <div class="suggestion-title">
+                  ✨ Be creative
+                </div>
+
+                <div class="suggestion-text">
+                  Generate fresh ideas
+                </div>
+
+              </button>
+
+              <button
+                class="suggestion"
+                onclick="useSuggestion('Help me plan my project')">
+
+                <div class="suggestion-title">
+                  🚀 Plan something
+                </div>
+
+                <div class="suggestion-text">
+                  Turn an idea into a plan
+                </div>
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- COMPOSER -->
+
+    <div class="composer-area">
+
+      <div class="composer">
+
+        <textarea
+          id="input"
+          rows="1"
+          placeholder="Message HEMTON.AI..."
+          autocomplete="off"
+          spellcheck="true"></textarea>
+
+        <button
+          class="composer-button"
+          title="Voice input"
+          onclick="startVoice()">
+          🎙
+        </button>
+
+        <button
+          class="composer-button send-button"
+          id="sendButton"
+          title="Send"
+          onclick="sendMessage()">
+          ↑
+        </button>
+
+      </div>
+
+      <div class="disclaimer">
+        HEMTON.AI can make mistakes. Check important information.
+      </div>
+
+    </div>
+
+  </main>
 
 </div>
 
 <script>
 
 const input = document.getElementById("input");
-const messages = document.getElementById("messages");
+const sendButton = document.getElementById("sendButton");
+const chatInner = document.getElementById("chatInner");
 const welcome = document.getElementById("welcome");
+const chat = document.getElementById("chat");
+const historyList = document.getElementById("historyList");
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
 
-function usePrompt(text){
-  input.value = text;
-  input.focus();
-}
+let conversationStarted = false;
 
-function handleKey(e){
-  if(e.key === "Enter" && !e.shiftKey){
-    e.preventDefault();
+/* AUTO RESIZE */
+
+input.addEventListener("input", function(){
+
+  this.style.height = "auto";
+
+  this.style.height =
+    Math.min(this.scrollHeight,140) + "px";
+
+  sendButton.disabled =
+    !this.value.trim();
+
+});
+
+sendButton.disabled = true;
+
+/* ENTER TO SEND */
+
+input.addEventListener("keydown",function(event){
+
+  if(
+    event.key === "Enter" &&
+    !event.shiftKey
+  ){
+
+    event.preventDefault();
+
     sendMessage();
+
   }
+
+});
+
+/* SUGGESTIONS */
+
+function useSuggestion(text){
+
+  input.value = text;
+
+  input.dispatchEvent(
+    new Event("input")
+  );
+
+  input.focus();
+
 }
+
+/* SEND */
 
 function sendMessage(){
 
@@ -520,74 +973,388 @@ function sendMessage(){
 
   if(!text) return;
 
-  welcome.style.display="none";
+  if(!conversationStarted){
+
+    welcome.style.display="none";
+
+    conversationStarted=true;
+
+    addHistoryItem(text);
+
+  }
 
   addMessage(text,"user");
 
   input.value="";
 
-  setTimeout(()=>{
-    const reply =
-      "Hello! I'm HEMTON.AI. 👋\n\n" +
-      "I received your message:\n\"" +
-      text +
-      "\"\n\n" +
-      "I'm currently running in demo mode. " +
-      "Connect an AI API to give me real AI intelligence.";
+  input.style.height="auto";
 
-    addMessage(reply,"ai");
-  },700);
+  sendButton.disabled=true;
+
+  showTyping();
+
+  setTimeout(function(){
+
+    removeTyping();
+
+    addMessage(
+      generateDemoReply(text),
+      "ai"
+    );
+
+  },900);
+
 }
+
+/* ADD MESSAGE */
 
 function addMessage(text,type){
 
-  const message=document.createElement("div");
-  message.className="message "+type;
+  const message =
+    document.createElement("div");
 
-  const avatar=document.createElement("div");
-  avatar.className="avatar";
-  avatar.textContent=type==="ai"?"H":"You";
+  message.className =
+    "message " + type;
 
-  const content=document.createElement("div");
-  content.className="content";
-  content.textContent=text;
+  const avatar =
+    document.createElement("div");
+
+  avatar.className =
+    "message-avatar";
+
+  avatar.textContent =
+    type === "ai" ? "H" : "YOU";
+
+  const body =
+    document.createElement("div");
+
+  body.className =
+    "message-body";
+
+  const name =
+    document.createElement("div");
+
+  name.className =
+    "message-name";
+
+  name.textContent =
+    type === "ai"
+      ? "HEMTON.AI"
+      : "You";
+
+  const content =
+    document.createElement("div");
+
+  content.className =
+    "message-content";
+
+  content.textContent = text;
+
+  body.appendChild(name);
+  body.appendChild(content);
+
+  if(type === "ai"){
+
+    const actions =
+      document.createElement("div");
+
+    actions.className =
+      "message-actions";
+
+    const copy =
+      document.createElement("button");
+
+    copy.className =
+      "action-button";
+
+    copy.textContent =
+      "Copy";
+
+    copy.onclick =
+      function(){
+
+        navigator.clipboard
+          .writeText(text)
+          .then(function(){
+
+            copy.textContent =
+              "Copied ✓";
+
+            setTimeout(
+              ()=>copy.textContent="Copy",
+              1200
+            );
+
+          })
+          .catch(
+            ()=>{}
+          );
+
+      };
+
+    actions.appendChild(copy);
+
+    body.appendChild(actions);
+
+  }
 
   message.appendChild(avatar);
-  message.appendChild(content);
+  message.appendChild(body);
 
-  messages.appendChild(message);
+  chatInner.appendChild(message);
 
-  messages.scrollTop=messages.scrollHeight;
+  scrollToBottom();
+
 }
+
+/* TYPING */
+
+function showTyping(){
+
+  const message =
+    document.createElement("div");
+
+  message.id="typingMessage";
+
+  message.className =
+    "message ai";
+
+  message.innerHTML = `
+    <div class="message-avatar">H</div>
+    <div class="message-body">
+      <div class="message-name">HEMTON.AI</div>
+      <div class="typing">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  `;
+
+  chatInner.appendChild(message);
+
+  scrollToBottom();
+
+}
+
+function removeTyping(){
+
+  const typing =
+    document.getElementById(
+      "typingMessage"
+    );
+
+  if(typing)
+    typing.remove();
+
+}
+
+/* DEMO RESPONSE */
+
+function generateDemoReply(text){
+
+  const lower =
+    text.toLowerCase();
+
+  if(
+    lower.includes("hello") ||
+    lower.includes("hi") ||
+    lower.includes("hey")
+  ){
+
+    return (
+      "Hello! 👋\n\n" +
+      "I'm HEMTON.AI. " +
+      "It's great to meet you.\n\n" +
+      "I'm currently running in demo mode. " +
+      "The interface is ready, and the next step is connecting me to a real AI model."
+    );
+
+  }
+
+  if(
+    lower.includes("code") ||
+    lower.includes("program")
+  ){
+
+    return (
+      "Absolutely! 💻\n\n" +
+      "I can help you build, explain, " +
+      "debug, and improve code.\n\n" +
+      "HEMTON.AI is currently in demo mode, " +
+      "so the real AI engine still needs to be connected."
+    );
+
+  }
+
+  if(
+    lower.includes("who are you") ||
+    lower.includes("what are you")
+  ){
+
+    return (
+      "I'm HEMTON.AI 🤖\n\n" +
+      "I'm designed to be your personal AI assistant for questions, ideas, coding, writing, planning, and more.\n\n" +
+      "Right now I'm running the website's demo engine."
+    );
+
+  }
+
+  return (
+    "I received your message:\n\n" +
+    "“" + text + "”\n\n" +
+    "HEMTON.AI is currently in demo mode. " +
+    "Once a secure AI backend is connected, " +
+    "I'll be able to generate real AI answers to your questions."
+  );
+
+}
+
+/* HISTORY */
+
+function addHistoryItem(text){
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "history-item active";
+
+  item.textContent =
+    text.length > 28
+      ? text.substring(0,28)+"..."
+      : text;
+
+  historyList.prepend(item);
+
+}
+
+/* NEW CHAT */
 
 function newChat(){
 
-  messages.innerHTML="";
-  messages.appendChild(welcome);
-  welcome.style.display="block";
+  document
+    .querySelectorAll(".message")
+    .forEach(
+      el=>el.remove()
+    );
+
+  welcome.style.display="flex";
+
+  conversationStarted=false;
+
+  input.value="";
+
+  input.style.height="auto";
+
+  sendButton.disabled=true;
+
+  toggleSidebar(false);
+
 }
 
-function voiceInput(){
+/* VOICE */
 
-  if(!("webkitSpeechRecognition" in window)){
-    alert("Voice input is not supported in this browser.");
+function startVoice(){
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+
+    alert(
+      "Voice input isn't supported by this browser."
+    );
+
     return;
+
   }
 
   const recognition =
-    new webkitSpeechRecognition();
+    new SpeechRecognition();
 
-  recognition.lang="en-US";
+  recognition.lang =
+    "en-US";
+
+  recognition.interimResults =
+    false;
+
+  recognition.maxAlternatives =
+    1;
+
   recognition.start();
 
-  recognition.onresult=function(event){
-    input.value=event.results[0][0].transcript;
-  };
+  recognition.onresult =
+    function(event){
+
+      input.value =
+        event.results[0][0].transcript;
+
+      input.dispatchEvent(
+        new Event("input")
+      );
+
+      input.focus();
+
+    };
+
+  recognition.onerror =
+    function(){
+
+      console.log(
+        "Voice recognition error"
+      );
+
+    };
+
 }
 
-function toggleSidebar(){
-  alert("Open HEMTON.AI on a larger screen to see the full sidebar.");
+/* SIDEBAR */
+
+function toggleSidebar(force){
+
+  if(force === false){
+
+    sidebar.classList.remove("open");
+    overlay.classList.remove("open");
+    return;
+
+  }
+
+  sidebar.classList.toggle("open");
+  overlay.classList.toggle("open");
+
 }
+
+/* SCROLL */
+
+function scrollToBottom(){
+
+  setTimeout(function(){
+
+    chat.scrollTop =
+      chat.scrollHeight;
+
+  },50);
+
+}
+
+/* MODEL */
+
+document
+  .getElementById("modelSelect")
+  .addEventListener(
+    "change",
+    function(){
+
+      console.log(
+        "Selected model:",
+        this.value
+      );
+
+    }
+  );
 
 </script>
 
