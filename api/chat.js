@@ -51,7 +51,13 @@ ${memoryText || "(none)"}`;
       });
     }
 
-    const reply = data.output_text || "I didn't get a response.";
+    const reply =
+  data.output_text ||
+  data.output?.flatMap(item => item.content || [])
+    .filter(part => part.type === "output_text")
+    .map(part => part.text)
+    .join("") ||
+  "I didn't get a response.";
 
     return res.status(200).json({
       reply,
