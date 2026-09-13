@@ -58,21 +58,30 @@ function speak(text){
 
   speechSynthesis.cancel();
 
-  const maleVoice = voices.find(v =>
-    v.lang.startsWith("en") &&
-    /male|david|mark|daniel|george|alex|guy/i.test(v.name)
-  );
+  function speakNow(){
+    const voices = speechSynthesis.getVoices();
 
-  const u = new SpeechSynthesisUtterance(text);
+    const maleVoice = voices.find(v =>
+      v.lang.startsWith("en") &&
+      /male|david|mark|daniel|george|alex|guy/i.test(v.name)
+    );
 
-  if(maleVoice) {
-    u.voice = maleVoice;
+    const u = new SpeechSynthesisUtterance(text);
+
+    if(maleVoice) u.voice = maleVoice;
+
+    u.rate = 0.95;
+    u.pitch = 0.75;
+
+    speechSynthesis.speak(u);
   }
 
-  u.rate = 0.95;
-  u.pitch = 0.75;
-
-  speechSynthesis.speak(u);
+  if(speechSynthesis.getVoices().length){
+    speakNow();
+  }else{
+    speechSynthesis.onvoiceschanged = speakNow;
+    setTimeout(speakNow, 500);
+  }
 }
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(SR){
