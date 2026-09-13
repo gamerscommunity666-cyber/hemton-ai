@@ -44,20 +44,33 @@ promptBox.addEventListener("input",()=>{promptBox.style.height="auto";promptBox.
 document.querySelectorAll(".suggestions button").forEach(b=>b.onclick=()=>send(b.textContent));
 
 clearBtn.onclick=()=>{messages=[];memory=[];save();render();};
+let voices = [];
+
+function loadVoices(){
+  voices = speechSynthesis.getVoices();
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
 function speak(text){
   if(!("speechSynthesis" in window)) return;
 
   speechSynthesis.cancel();
 
-  const voices = speechSynthesis.getVoices();
   const maleVoice = voices.find(v =>
+    v.lang.startsWith("en") &&
     /male|david|mark|daniel|george|alex|guy/i.test(v.name)
   );
 
   const u = new SpeechSynthesisUtterance(text);
-  if(maleVoice) u.voice = maleVoice;
-  u.rate = 0.98;
-  u.pitch = 0.85;
+
+  if(maleVoice) {
+    u.voice = maleVoice;
+  }
+
+  u.rate = 0.95;
+  u.pitch = 0.75;
 
   speechSynthesis.speak(u);
 }
