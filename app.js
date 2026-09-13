@@ -45,9 +45,20 @@ document.querySelectorAll(".suggestions button").forEach(b=>b.onclick=()=>send(b
 
 clearBtn.onclick=()=>{messages=[];memory=[];save();render();};
 function speak(text){
-  if(!("speechSynthesis" in window))return;
+  if(!("speechSynthesis" in window)) return;
+
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text); u.rate=.98; u.pitch=1;
+
+  const voices = speechSynthesis.getVoices();
+  const maleVoice = voices.find(v =>
+    /male|david|mark|daniel|george|alex|guy/i.test(v.name)
+  );
+
+  const u = new SpeechSynthesisUtterance(text);
+  if(maleVoice) u.voice = maleVoice;
+  u.rate = 0.98;
+  u.pitch = 0.85;
+
   speechSynthesis.speak(u);
 }
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
