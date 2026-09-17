@@ -58,3 +58,24 @@ body::after {
     opacity: 0.13;
   }
 }
+/* ===== HEMTON STARFIELD ===== */
+
+body {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(110,245,210,.08) 0 1px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(140,123,255,.10) 0 1px, transparent 2px),
+    radial-gradient(circle at 40% 80%, rgba(110,245,210,.07) 0 1px, transparent 2px),
+    #07080d;
+  background-size: 180px 180px, 240px 240px, 300px 300px;
+  animation: starDrift 25s linear infinite;
+}
+
+@keyframes starDrift {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+
+  to {
+    background-position: 180px 90px, -240px 120px, 300px -150px;
+  }
+}
