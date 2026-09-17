@@ -8,114 +8,57 @@ export default async function handler(req, res) {
   try {
     const { messages = [], memory = [] } = req.body || {};
 
-    // ===== SPECIAL HEMTON FAMILY RULE =====
-
-    const lastMessage = messages[messages.length - 1];
-
-    if (
-      lastMessage &&
-      lastMessage.role === "user" &&
-      /who\s+is\s+your\s+grandson/i.test(
-        String(lastMessage.content)
-      )
-    ) {
-      return res.status(200).json({
-        reply:
-          "My grandson is an intelligent and golden mountain, Hemadri. ❤️",
-        memory: memory.slice(-30)
-      });
-    }
-
-    // ===== API KEY CHECK =====
-
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({
-        error:
-          "OPENAI_API_KEY is not configured on the server."
+        error: "OPENAI_API_KEY is not configured."
       });
     }
 
-    // ===== SAFE MESSAGES =====
-
-    const safeMessages = messages
-      .slice(-20)
-      .map(m => ({
-        role:
-          m.role === "assistant"
-            ? "assistant"
-            : "user",
-        content:
-          String(m.content).slice(0, 12000)
-      }));
-
-    // ===== MEMORY =====
+    const safeMessages = messages.slice(-20).map(m => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content).slice(0, 12000)
+    }));
 
     const memoryText = memory
       .slice(-30)
       .map(x => String(x).slice(0, 500))
       .join("\n");
 
-    // ===== HEMTON SYSTEM =====
-
-    const system = `
-You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
-
-Answer naturally, clearly and honestly.
-
-MEMORY RULES:
-- Remember useful, durable facts about the user.
-- If the user says "remember", save the stated fact.
-- If the user says "forget", remove that fact.
-- Never store passwords, API keys, authentication codes, financial secrets, or other secrets.
-- Never invent personal facts.
-- Do not store ordinary one-time conversation.
-- Keep memory short and useful.
-- Return the complete updated memory list.
-
-CURRENT MEMORY:
-${memoryText || "(none)"}
-`;
-
-    // ===== OPENAI REQUEST =====
-
     const response = await fetch(
       "https://api.openai.com/v1/responses",
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
-          "Authorization":
-            `Bearer ${process.env.OPENAI_API_KEY}`
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
         },
-
         body: JSON.stringify({
-          model:
-            process.env.OPENAI_MODEL ||
-            "gpt-5.6-luna",
+          model: process.env.OPENAI_MODEL || "gpt-5.6",
+          instructions: `
+You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
 
-          instructions: system,
+Answer naturally, clearly and honestly.
 
+Remember useful, durable facts when the user asks you to remember something.
+
+Do not store passwords, API keys, authentication codes, financial secrets, or other sensitive secrets.
+
+Current memory:
+${memoryText || "(none)"}
+`,
           input: safeMessages,
-
           text: {
             format: {
               type: "json_schema",
-
               name: "hemton_response",
-
               strict: true,
-
               schema: {
                 type: "object",
-
                 additionalProperties: false,
-
                 properties: {
                   reply: {
                     type: "string"
                   },
-
                   memory: {
                     type: "array",
                     items: {
@@ -123,11 +66,7 @@ ${memoryText || "(none)"}
                     }
                   }
                 },
-
-                required: [
-                  "reply",
-                  "memory"
-                ]
+                required: ["reply", "memory"]
               }
             }
           }
@@ -138,80 +77,42 @@ ${memoryText || "(none)"}
     const data = await response.json();
 
     if (!response.ok) {
-      console.error(
-        "OPENAI ERROR:",
-        JSON.stringify(data)
-      );
+      console.error("OPENAI ERROR:", JSON.stringify(data));
 
       return res.status(response.status).json({
-        error:
-          data?.error?.message ||
-          "OpenAI request failed"
+        error: data?.error?.message || "OpenAI request failed."
       });
     }
 
-    // ===== GET AI TEXT =====
-
     let rawText = data.output_text;
 
-    if (
-      !rawText &&
-      Array.isArray(data.output)
-    ) {
+    if (!rawText && Array.isArray(data.output)) {
       rawText = data.output
         .flatMap(item =>
-          Array.isArray(item.content)
-            ? item.content
-            : []
+          Array.isArray(item.content) ? item.content : []
         )
-        .filter(
-          part =>
-            part.type === "output_text"
-        )
-        .map(
-          part =>
-            part.text || ""
-        )
+        .filter(part => part.type === "output_text")
+        .map(part => part.text || "")
         .join("");
     }
 
     if (!rawText) {
       return res.status(500).json({
-        error:
-          "OpenAI returned no text."
+        error: "OpenAI returned no text."
       });
     }
 
-    // ===== PARSE RESPONSE =====
-
-    let result;
-
-    try {
-      result = JSON.parse(rawText);
-    } catch (e) {
-      console.error(
-        "JSON parse failed:",
-        rawText
-      );
-
-      return res.status(500).json({
-        error:
-          "Could not parse the AI response."
-      });
-    }
+    const result = JSON.parse(rawText);
 
     const reply =
-      typeof result.reply === "string" &&
-      result.reply.trim()
+      typeof result.reply === "string" && result.reply.trim()
         ? result.reply.trim()
         : "I didn't get a response.";
 
     const newMemory =
       Array.isArray(result.memory)
         ? result.memory
-            .map(x =>
-              String(x).trim()
-            )
+            .map(x => String(x).trim())
             .filter(Boolean)
             .slice(-30)
         : memory.slice(-30);
@@ -222,15 +123,10 @@ ${memoryText || "(none)"}
     });
 
   } catch (error) {
-
-    console.error(
-      "HEMTON ERROR:",
-      error
-    );
+    console.error("HEMTON ERROR:", error);
 
     return res.status(500).json({
-      error:
-        "Unexpected server error."
+      error: "Unexpected server error."
     });
   }
 }
