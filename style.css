@@ -112,3 +112,62 @@ body .app::before {
     transform: translate(-50%, -50%) rotate(342deg);
   }
 }
+/* ===== HEMTON ENERGY ORB ===== */
+
+.orb {
+  position: relative;
+  animation: hemtonOrbPulse 3s ease-in-out infinite;
+}
+
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border: 1px solid rgba(110, 245, 210, 0.35);
+  border-radius: 34px;
+  box-shadow:
+    0 0 18px rgba(110, 245, 210, 0.25),
+    0 0 40px rgba(140, 123, 255, 0.15);
+  animation: orbRingSpin 5s linear infinite;
+}
+
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border: 1px solid rgba(140, 123, 255, 0.15);
+  border-radius: 40px;
+  animation: orbRingSpinReverse 8s linear infinite;
+}
+
+@keyframes hemtonOrbPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+    filter: brightness(1.25);
+  }
+}
+
+@keyframes orbRingSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbRingSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
+}
