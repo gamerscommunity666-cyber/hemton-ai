@@ -79,3 +79,36 @@ body {
     background-position: 180px 90px, -240px 120px, 300px -150px;
   }
 }
+/* ===== HEMTON ORBITAL RING ===== */
+
+body {
+  overflow-x: hidden;
+}
+
+body .app::before {
+  content: "";
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 300px;
+  height: 105px;
+  border: 1px solid rgba(110, 245, 210, 0.28);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  box-shadow:
+    0 0 15px rgba(110, 245, 210, 0.18),
+    inset 0 0 15px rgba(140, 123, 255, 0.12);
+  pointer-events: none;
+  z-index: -1;
+  animation: orbitRing 6s linear infinite;
+}
+
+@keyframes orbitRing {
+  from {
+    transform: translate(-50%, -50%) rotate(-18deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(342deg);
+  }
+}
