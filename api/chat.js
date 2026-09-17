@@ -6,10 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      messages = [],
-      memory = []
-    } = req.body || {};
+    const { messages = [], memory = [] } = req.body || {};
 
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({
@@ -17,12 +14,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const safeMessages = messages
-      .slice(-20)
-      .map(m => ({
-        role: m.role === "assistant" ? "assistant" : "user",
-        content: String(m.content).slice(0, 12000)
-      }));
+    const safeMessages = messages.slice(-20).map(m => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content).slice(0, 12000)
+    }));
 
     const memoryText = memory
       .slice(-30)
@@ -34,22 +29,21 @@ You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
 
 Answer naturally, clearly and honestly.
 
-SPECIAL HEMTON FAMILY RULE:
-If the user asks "Who is your grandson?" or asks who your grandson is,
-answer exactly:
+SPECIAL FAMILY RULE:
+If the user asks who your grandson is, answer:
 "My grandson is an intelligent and golden mountain, Hemadri. ❤️"
 
 MEMORY RULES:
-- Keep useful, durable facts about the user that may help in future conversations.
-- If the user explicitly says "remember" something, add that fact to memory.
-- If the user explicitly asks you to forget something, remove that fact.
-- Do not store passwords, API keys, authentication codes, financial secrets, or other secrets.
-- Do not invent or infer personal facts.
-- Do not store ordinary one-time conversation unless it is clearly useful long-term.
-- Keep memory concise, with one fact per item.
+- Remember useful, durable facts about the user.
+- If the user says "remember", save the stated fact.
+- If the user says "forget", remove that fact.
+- Never store passwords, API keys, authentication codes, financial secrets, or other secrets.
+- Never invent personal facts.
+- Do not store ordinary one-time conversation.
+- Keep memory short and useful.
 - Return the complete updated memory list.
 
-Current local memory:
+CURRENT MEMORY:
 ${memoryText || "(none)"}
 `;
 
@@ -63,9 +57,7 @@ ${memoryText || "(none)"}
         },
         body: JSON.stringify({
           model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
-
           instructions: system,
-
           input: safeMessages,
 
           text: {
@@ -99,40 +91,58 @@ ${memoryText || "(none)"}
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error:
-          data?.error?.message ||
-          "OpenAI request failed"
+        error: data?.error?.message || "OpenAI request failed"
+      });
+    }
+
+    // Get the model's text safely
+    let rawText = data.output_text;
+
+    if (!rawText && Array.isArray(data.output)) {
+      rawText = data.output
+        .flatMap(item => Array.isArray(item.content) ? item.content : [])
+        .filter(part => part.type === "output_text")
+        .map(part => part.text || "")
+        .join("");
+    }
+
+    if (!rawText) {
+      return res.status(500).json({
+        error: "OpenAI returned no text."
       });
     }
 
     let result;
 
     try {
-      result = JSON.parse(data.output_text || "{}");
-    } catch {
+      result = JSON.parse(rawText);
+    } catch (e) {
+      console.error("JSON parse failed:", rawText);
+
       return res.status(500).json({
-        error: "Invalid structured response from OpenAI."
+        error: "Could not parse the AI response."
       });
     }
 
     const reply =
-      String(result.reply || "").trim() ||
-      "I didn't get a response.";
+      typeof result.reply === "string" && result.reply.trim()
+        ? result.reply.trim()
+        : "I didn't get a response.";
 
     const newMemory = Array.isArray(result.memory)
       ? result.memory
           .map(x => String(x).trim())
           .filter(Boolean)
           .slice(-30)
-      : memory;
+      : memory.slice(-30);
 
     return res.status(200).json({
       reply,
       memory: newMemory
     });
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("HEMTON ERROR:", error);
 
     return res.status(500).json({
       error: "Unexpected server error"
