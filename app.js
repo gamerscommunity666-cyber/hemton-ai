@@ -67,7 +67,7 @@ async function send(text) {
   sendBtn.disabled = true;
   status.textContent = "Hemton is thinking…";
 
-  try {const imageRequest =
+  const imageRequest =
       /\b(create|generate|make|draw|show|render|design)\b.*\b(image|picture|photo|artwork|illustration|visual)\b/i.test(text);
 
     if (imageRequest) {
