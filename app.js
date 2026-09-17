@@ -68,6 +68,11 @@ async function send(text) {
 sendBtn.disabled = true;
 status.textContent = "Hemton is thinking…";
 
+const sigma = document.createElement("div");
+sigma.className = "sigma-thinking";
+sigma.innerHTML = `<div class="sigma-face">🗿</div>`;
+chat.appendChild(sigma);
+
 try {
   const imageRequest =
   
