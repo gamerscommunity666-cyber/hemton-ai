@@ -171,3 +171,50 @@ body .app::before {
     transform: rotate(0deg);
   }
 }
+/* ===== HEMTON MESSAGE ANIMATIONS ===== */
+
+.message {
+  animation: messageIn 0.45s ease-out both;
+}
+
+.message.user {
+  animation-name: userMessageIn;
+}
+
+.message.assistant {
+  animation-name: assistantMessageIn;
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes userMessageIn {
+  from {
+    opacity: 0;
+    transform: translateX(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes assistantMessageIn {
+  from {
+    opacity: 0;
+    transform: translateX(-25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
