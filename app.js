@@ -126,7 +126,9 @@ try {
 
     const data = await res.json();
 
-    if (!res.ok) {
+sigma.remove();
+
+if (!res.ok) {
       throw new Error(data.error || "Server error");
     }
 
