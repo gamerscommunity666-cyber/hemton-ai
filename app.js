@@ -151,11 +151,16 @@ if (!res.ok) {
       "assistant",
       "I couldn't connect to my AI server yet. Check that the backend is deployed and OPENAI_API_KEY is configured."
     );
-  finally {
-  if (sigma && sigma.isConnected) {
-    sigma.remove();
-  }
 
+  } finally {
+    if (sigma && sigma.isConnected) {
+      sigma.remove();
+    }
+
+    sendBtn.disabled = false;
+    status.textContent = "";
+  }
+}
   sendBtn.disabled = false;
   status.textContent = "";
 }
