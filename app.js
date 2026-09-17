@@ -151,10 +151,14 @@ if (!res.ok) {
       "assistant",
       "I couldn't connect to my AI server yet. Check that the backend is deployed and OPENAI_API_KEY is configured."
     );
-  } finally {
-    sendBtn.disabled = false;
-    status.textContent = "";
+  finally {
+  if (sigma && sigma.isConnected) {
+    sigma.remove();
   }
+
+  sendBtn.disabled = false;
+  status.textContent = "";
+}
 }
 
 form.addEventListener("submit", e => {
