@@ -64,10 +64,13 @@ async function send(text) {
   promptBox.value = "";
   promptBox.style.height = "auto";
 
-  sendBtn.disabled = true;
-  status.textContent = "Hemton is thinking…";
+  
+sendBtn.disabled = true;
+status.textContent = "Hemton is thinking…";
 
+try {
   const imageRequest =
+  
       /\b(create|generate|make|draw|show|render|design)\b.*\b(image|picture|photo|artwork|illustration|visual)\b/i.test(text);
 
     if (imageRequest) {
