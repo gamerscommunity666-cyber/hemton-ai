@@ -7,6 +7,20 @@ const micBtn = document.getElementById("micBtn");
 const status = document.getElementById("status");
 const clearBtn = document.getElementById("clearBtn");
 
+/* ===== HISTORY ELEMENTS ===== */
+
+const historyBtn = document.getElementById("historyBtn");
+const sidebar = document.getElementById("sidebar");
+const closeSidebar = document.getElementById("closeSidebar");
+const sidebarNewChat = document.getElementById("sidebarNewChat");
+const historyList = document.getElementById("historyList");
+const sidebarOverlay =
+  document.getElementById("sidebarOverlay");
+
+/* =========================================================
+   HEMTON CHAT STORAGE
+   ========================================================= */
+
 let messages = JSON.parse(
   localStorage.getItem("hemton_messages") || "[]"
 );
@@ -15,7 +29,24 @@ let memory = JSON.parse(
   localStorage.getItem("hemton_memory") || "[]"
 );
 
+/*
+   Each conversation is stored separately.
+*/
+
+let chats = JSON.parse(
+  localStorage.getItem("hemton_chats") || "[]"
+);
+
+let activeChatId = localStorage.getItem(
+  "hemton_active_chat"
+);
+
+/* =========================================================
+   SAVE
+   ========================================================= */
+
 function save() {
+
   localStorage.setItem(
     "hemton_messages",
     JSON.stringify(messages)
@@ -25,10 +56,27 @@ function save() {
     "hemton_memory",
     JSON.stringify(memory)
   );
+
+  localStorage.setItem(
+    "hemton_chats",
+    JSON.stringify(chats)
+  );
+
+  if (activeChatId) {
+    localStorage.setItem(
+      "hemton_active_chat",
+      activeChatId
+    );
+  }
 }
 
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
 function escapeHtml(s) {
-  return s.replace(
+
+  return String(s).replace(
     /[&<>"']/g,
     c =>
       ({
@@ -41,17 +89,160 @@ function escapeHtml(s) {
   );
 }
 
+/* =========================================================
+   CREATE CHAT
+   ========================================================= */
+
+function createChat() {
+
+  const id =
+    Date.now().toString() +
+    Math.random()
+      .toString(36)
+      .slice(2);
+
+  const newChat = {
+    id,
+    title: "New chat",
+    messages: [],
+    memory: [],
+    createdAt: Date.now()
+  };
+
+  chats.unshift(newChat);
+
+  activeChatId = id;
+
+  messages = [];
+  memory = [];
+
+  save();
+
+  render();
+  renderHistory();
+
+  return newChat;
+}
+
+/* =========================================================
+   GET ACTIVE CHAT
+   ========================================================= */
+
+function getActiveChat() {
+
+  return chats.find(
+    c => c.id === activeChatId
+  );
+}
+
+/* =========================================================
+   SAVE CURRENT CHAT
+   ========================================================= */
+
+function saveCurrentChat() {
+
+  if (!activeChatId) {
+    return;
+  }
+
+  const current =
+    getActiveChat();
+
+  if (!current) {
+    return;
+  }
+
+  current.messages =
+    [...messages];
+
+  current.memory =
+    [...memory];
+
+  if (messages.length > 0) {
+
+    const firstUserMessage =
+      messages.find(
+        m => m.role === "user"
+      );
+
+    if (firstUserMessage) {
+
+      current.title =
+        firstUserMessage.content
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 40);
+
+      if (
+        firstUserMessage.content.length > 40
+      ) {
+        current.title += "…";
+      }
+    }
+  }
+
+  save();
+}
+
+/* =========================================================
+   LOAD CHAT
+   ========================================================= */
+
+function loadChat(id) {
+
+  const selected =
+    chats.find(
+      c => c.id === id
+    );
+
+  if (!selected) {
+    return;
+  }
+
+  activeChatId =
+    selected.id;
+
+  messages =
+    Array.isArray(selected.messages)
+      ? [...selected.messages]
+      : [];
+
+  memory =
+    Array.isArray(selected.memory)
+      ? [...selected.memory]
+      : [];
+
+  save();
+
+  render();
+
+  closeHistory();
+}
+
+/* =========================================================
+   RENDER CHAT
+   ========================================================= */
+
 function render() {
+
   document
     .querySelectorAll(".message")
-    .forEach(x => x.remove());
+    .forEach(
+      x => x.remove()
+    );
 
-  welcome.style.display = messages.length ? "none" : "";
+  welcome.style.display =
+    messages.length
+      ? "none"
+      : "";
 
   for (const m of messages) {
-    const row = document.createElement("div");
 
-    row.className = `message ${m.role}`;
+    const row =
+      document.createElement("div");
+
+    row.className =
+      `message ${m.role}`;
 
     const av =
       m.role === "assistant"
@@ -60,6 +251,7 @@ function render() {
 
     row.innerHTML = `
       ${av}
+
       <div class="bubble">
         ${escapeHtml(m.content)}
       </div>
@@ -74,42 +266,239 @@ function render() {
   );
 }
 
+/* =========================================================
+   ADD MESSAGE
+   ========================================================= */
+
 function add(role, content) {
+
   messages.push({
     role,
     content
   });
 
-  save();
+  saveCurrentChat();
+
   render();
+
+  renderHistory();
 }
 
-async function send(text) {
-  text = text.trim();
+/* =========================================================
+   HISTORY UI
+   ========================================================= */
 
-  if (!text) return;
+function renderHistory() {
 
-  add("user", text);
+  if (!historyList) {
+    return;
+  }
+
+  historyList.innerHTML = "";
+
+  if (!chats.length) {
+
+    historyList.innerHTML = `
+      <div class="history-empty">
+        Your conversations will appear here.
+      </div>
+    `;
+
+    return;
+  }
+
+  for (const item of chats) {
+
+    const button =
+      document.createElement("button");
+
+    button.className =
+      "history-item";
+
+    button.textContent =
+      item.title || "New chat";
+
+    if (
+      item.id === activeChatId
+    ) {
+      button.style.borderColor =
+        "rgba(110,245,210,.45)";
+
+      button.style.background =
+        "rgba(110,245,210,.08)";
+    }
+
+    button.onclick = () => {
+      loadChat(item.id);
+    };
+
+    historyList.appendChild(
+      button
+    );
+  }
+}
+
+/* =========================================================
+   OPEN HISTORY
+   ========================================================= */
+
+function openHistory() {
+
+  sidebar.classList.add("open");
+
+  sidebarOverlay.classList.add(
+    "open"
+  );
+
+  renderHistory();
+}
+
+/* =========================================================
+   CLOSE HISTORY
+   ========================================================= */
+
+function closeHistory() {
+
+  sidebar.classList.remove(
+    "open"
+  );
+
+  sidebarOverlay.classList.remove(
+    "open"
+  );
+}
+
+/* =========================================================
+   HISTORY BUTTON
+   ========================================================= */
+
+if (historyBtn) {
+
+  historyBtn.onclick = () => {
+
+    if (
+      sidebar.classList.contains(
+        "open"
+      )
+    ) {
+      closeHistory();
+    } else {
+      openHistory();
+    }
+
+  };
+}
+
+/* =========================================================
+   CLOSE BUTTON
+   ========================================================= */
+
+if (closeSidebar) {
+
+  closeSidebar.onclick =
+    closeHistory;
+
+}
+
+/* =========================================================
+   OVERLAY CLOSE
+   ========================================================= */
+
+if (sidebarOverlay) {
+
+  sidebarOverlay.onclick =
+    closeHistory;
+
+}
+
+/* =========================================================
+   NEW CHAT
+   ========================================================= */
+
+function startNewChat() {
+
+  saveCurrentChat();
+
+  createChat();
+
+  closeHistory();
 
   promptBox.value = "";
-  promptBox.style.height = "auto";
+
+  promptBox.style.height =
+    "auto";
+
+  status.textContent = "";
+}
+
+/* Top-right + */
+
+clearBtn.onclick =
+  startNewChat;
+
+/* Sidebar + New chat */
+
+if (sidebarNewChat) {
+
+  sidebarNewChat.onclick =
+    startNewChat;
+
+}
+
+/* =========================================================
+   SEND
+   ========================================================= */
+
+async function send(text) {
+
+  text = text.trim();
+
+  if (!text) {
+    return;
+  }
+
+  /*
+    If there is no active conversation,
+    create one automatically.
+  */
+
+  if (!activeChatId) {
+    createChat();
+  }
+
+  add(
+    "user",
+    text
+  );
+
+  promptBox.value = "";
+
+  promptBox.style.height =
+    "auto";
 
   sendBtn.disabled = true;
-  status.textContent = "Hemton is thinking…";
 
-  // ===== SIGMA THINKING FACE =====
+  status.textContent =
+    "Hemton is thinking…";
 
-  const sigma = document.createElement("div");
+  /* =======================================================
+     SIGMA THINKING FACE
+     ======================================================= */
 
-  sigma.className = "sigma-thinking";
+  const sigma =
+    document.createElement("div");
+
+  sigma.className =
+    "sigma-thinking";
 
   sigma.innerHTML = `
     <div class="sigma-face">🗿</div>
   `;
 
-  chat.appendChild(sigma);
+  chat.appendChild(
+    sigma
+  );
 
-  // Scroll to sigma
   sigma.scrollIntoView({
     behavior: "smooth",
     block: "center"
@@ -117,36 +506,46 @@ async function send(text) {
 
   try {
 
-    // ===== IMAGE REQUEST DETECTION =====
+    /* =====================================================
+       IMAGE REQUEST DETECTION
+       ===================================================== */
 
     const imageRequest =
       /\b(create|generate|make|draw|show|render|design)\b.*\b(image|picture|photo|artwork|illustration|visual)\b/i
-      .test(text);
+        .test(text);
 
-    // ===== IMAGE GENERATION =====
+    /* =====================================================
+       IMAGE GENERATION
+       ===================================================== */
 
     if (imageRequest) {
 
       status.textContent =
         "HEMTON is creating your image…";
 
-      const imageRes = await fetch(
-        "/api/image",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            prompt: text
-          })
-        }
-      );
+      const imageRes =
+        await fetch(
+          "/api/image",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                prompt: text
+              })
+          }
+        );
 
       const imageData =
         await imageRes.json();
 
       if (!imageRes.ok) {
+
         throw new Error(
           imageData.error ||
           "Image generation failed."
@@ -159,7 +558,9 @@ async function send(text) {
       );
 
       const imageRow =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       imageRow.className =
         "message assistant";
@@ -168,6 +569,7 @@ async function send(text) {
         <div class="avatar">H</div>
 
         <div class="bubble">
+
           <img
             src="${imageData.image}"
             alt="Generated by HEMTON.AI"
@@ -175,55 +577,89 @@ async function send(text) {
               max-width:100%;
               border-radius:16px;
             "
-          >
+          />
+
         </div>
       `;
 
-      chat.appendChild(imageRow);
+      chat.appendChild(
+        imageRow
+      );
+
+      saveCurrentChat();
+
+      renderHistory();
 
       return;
     }
 
-    // ===== NORMAL AI CHAT =====
+    /* =====================================================
+       NORMAL AI CHAT
+       ===================================================== */
 
-    const res = await fetch(
-      "/api/chat",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          messages: messages.slice(-20),
-          memory: memory.slice(-30)
-        })
-      }
-    );
+    const res =
+      await fetch(
+        "/api/chat",
+        {
+          method: "POST",
 
-    const data = await res.json();
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              messages:
+                messages.slice(-20),
+
+              memory:
+                memory.slice(-30)
+            })
+          }
+        );
+
+    const data =
+      await res.json();
 
     if (!res.ok) {
+
       throw new Error(
-        data.error || "Server error"
+        data.error ||
+        "Server error"
       );
     }
 
     add(
       "assistant",
-      data.reply || "I didn't get a response."
+      data.reply ||
+      "I didn't get a response."
     );
 
-    // ===== MEMORY =====
+    /* =====================================================
+       MEMORY
+       ===================================================== */
 
-    if (Array.isArray(data.memory)) {
-      memory = data.memory.slice(-30);
+    if (
+      Array.isArray(data.memory)
+    ) {
+
+      memory =
+        data.memory.slice(-30);
+
     }
 
-    save();
+    saveCurrentChat();
 
-    // ===== SPEAK =====
+    renderHistory();
 
-    speak(data.reply);
+    /* =====================================================
+       SPEAK
+       ===================================================== */
+
+    speak(
+      data.reply
+    );
 
   } catch (e) {
 
@@ -236,86 +672,116 @@ async function send(text) {
 
   } finally {
 
-    // ===== REMOVE SIGMA =====
+    /* =====================================================
+       REMOVE SIGMA
+       ===================================================== */
 
-    if (sigma && sigma.isConnected) {
+    if (
+      sigma &&
+      sigma.isConnected
+    ) {
       sigma.remove();
     }
 
-    sendBtn.disabled = false;
-    status.textContent = "";
+    sendBtn.disabled =
+      false;
+
+    status.textContent =
+      "";
   }
 }
 
-// ===== SEND FORM =====
+/* =========================================================
+   SEND FORM
+   ========================================================= */
 
 form.addEventListener(
   "submit",
   e => {
+
     e.preventDefault();
-    send(promptBox.value);
+
+    send(
+      promptBox.value
+    );
+
   }
 );
 
-// ===== TEXT BOX =====
+/* =========================================================
+   TEXT BOX
+   ========================================================= */
 
 promptBox.addEventListener(
   "input",
   () => {
-    promptBox.style.height = "auto";
+
+    promptBox.style.height =
+      "auto";
 
     promptBox.style.height =
       Math.min(
         promptBox.scrollHeight,
         140
       ) + "px";
+
   }
 );
 
-// ===== SUGGESTIONS =====
+/* =========================================================
+   SUGGESTIONS
+   ========================================================= */
 
 document
-  .querySelectorAll(".suggestions button")
-  .forEach(button => {
+  .querySelectorAll(
+    ".suggestions button"
+  )
+  .forEach(
+    button => {
 
-    button.onclick = () => {
-      send(button.textContent);
-    };
+      button.onclick = () => {
 
-  });
+        send(
+          button.textContent
+        );
 
-// ===== CLEAR CHAT =====
+      };
 
-clearBtn.onclick = () => {
+    }
+  );
 
-  messages = [];
-  memory = [];
-
-  save();
-  render();
-
-};
-
-// ===== VOICE OUTPUT =====
+/* =========================================================
+   VOICE OUTPUT
+   ========================================================= */
 
 function speak(text) {
 
-  if (!("speechSynthesis" in window)) {
+  if (
+    !(
+      "speechSynthesis"
+      in window
+    )
+  ) {
     return;
   }
 
   speechSynthesis.cancel();
 
   const u =
-    new SpeechSynthesisUtterance(text);
+    new SpeechSynthesisUtterance(
+      text
+    );
 
   u.rate = 0.98;
+
   u.pitch = 1;
 
   speechSynthesis.speak(u);
 }
 
-// ===== VOICE INPUT =====
+/* =========================================================
+   VOICE INPUT
+   ========================================================= */
 
 const SR =
   window.SpeechRecognition ||
@@ -323,16 +789,20 @@ const SR =
 
 if (SR) {
 
-  const rec = new SR();
+  const rec =
+    new SR();
 
   rec.lang =
-    navigator.language || "en-US";
+    navigator.language ||
+    "en-US";
 
-  rec.interimResults = false;
+  rec.interimResults =
+    false;
 
   rec.onstart = () => {
 
-    micBtn.textContent = "⏹️";
+    micBtn.textContent =
+      "⏹️";
 
     status.textContent =
       "Listening…";
@@ -341,38 +811,125 @@ if (SR) {
 
   rec.onend = () => {
 
-    micBtn.textContent = "🎙️";
+    micBtn.textContent =
+      "🎙️";
 
-    status.textContent = "";
+    status.textContent =
+      "";
 
   };
 
   rec.onresult = e => {
 
     promptBox.value =
-      e.results[0][0].transcript;
+      e.results[0][0]
+        .transcript;
 
-    send(promptBox.value);
+    send(
+      promptBox.value
+    );
 
   };
 
   micBtn.onclick = () => {
 
     try {
+
       rec.start();
+
     } catch {}
 
   };
 
 } else {
 
-  micBtn.disabled = true;
+  micBtn.disabled =
+    true;
 
   micBtn.title =
     "Voice input is not supported in this browser";
 
 }
 
-// ===== START =====
+/* =========================================================
+   STARTUP
+   ========================================================= */
+
+/*
+   If old messages exist but there are no
+   chat-history records, migrate them into
+   the first conversation.
+*/
+
+if (
+  !chats.length &&
+  messages.length
+) {
+
+  createChat();
+
+  /*
+    createChat() clears messages,
+    so restore the old conversation.
+  */
+
+  const migrated =
+    getActiveChat();
+
+  if (migrated) {
+
+    migrated.messages =
+      [...messages];
+
+    migrated.memory =
+      [...memory];
+
+    const firstUser =
+      messages.find(
+        m => m.role === "user"
+      );
+
+    if (firstUser) {
+
+      migrated.title =
+        firstUser.content
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 40);
+
+    }
+
+    messages =
+      [...migrated.messages];
+
+    memory =
+      [...migrated.memory];
+
+    save();
+  }
+
+}
+
+/*
+   If there is no active chat,
+   keep the welcome screen clean.
+*/
+
+if (
+  activeChatId &&
+  !getActiveChat()
+) {
+
+  activeChatId =
+    null;
+
+  messages = [];
+
+  memory = [];
+
+  save();
+}
 
 render();
+
+renderHistory();
