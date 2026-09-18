@@ -10,10 +10,9 @@ export default async function handler(req, res) {
 
     const lastMessage = messages[messages.length - 1];
 
-    /*
-      SPECIAL HEMTON RULE:
-      Who is your grandson?
-    */
+    // ==========================================
+    // SPECIAL RULE: HEMTON'S GRANDSON
+    // ==========================================
     if (
       lastMessage &&
       lastMessage.role === "user" &&
@@ -24,14 +23,15 @@ export default async function handler(req, res) {
       return res.status(200).json({
         reply:
           "My grandson is an intelligent and golden mountain, Hemadri. ❤️",
-        memory: memory.slice(-30)
+        memory: Array.isArray(memory)
+          ? memory.slice(-30)
+          : []
       });
     }
 
-    /*
-      SPECIAL HEMTON RULE:
-      Who is the author of you?
-    */
+    // ==========================================
+    // SPECIAL RULE: HEMTON'S AUTHOR
+    // ==========================================
     if (
       lastMessage &&
       lastMessage.role === "user" &&
@@ -42,81 +42,99 @@ export default async function handler(req, res) {
       return res.status(200).json({
         reply:
           "The author of me is ChatGPT, the king 👑. The creators are Hemadri 💀. Special thanks to Mahidhar 🫡 for this!",
-        memory: memory.slice(-30)
+        memory: Array.isArray(memory)
+          ? memory.slice(-30)
+          : []
       });
     }
 
-    /*
-      Check Groq API key
-    */
+    // ==========================================
+    // CHECK GROQ API KEY
+    // ==========================================
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         error: "GROQ_API_KEY is not configured."
       });
     }
 
-    /*
-      Keep the conversation reasonably small
-    */
-    const safeMessages = messages
-      .slice(-20)
-      .map((m) => ({
-        role:
-          m.role === "assistant"
-            ? "assistant"
-            : "user",
-        content: String(m.content).slice(0, 12000)
-      }));
+    // ==========================================
+    // SAFE MESSAGE HISTORY
+    // ==========================================
+    const safeMessages = Array.isArray(messages)
+      ? messages
+          .slice(-20)
+          .map((m) => ({
+            role:
+              m.role === "assistant"
+                ? "assistant"
+                : "user",
+            content: String(m.content || "").slice(
+              0,
+              12000
+            )
+          }))
+      : [];
 
-    /*
-      Convert memory into text
-    */
-    const memoryText = memory
-      .slice(-30)
-      .map((x) => String(x).slice(0, 500))
-      .join("\n");
+    // ==========================================
+    // MEMORY
+    // ==========================================
+    const safeMemory = Array.isArray(memory)
+      ? memory
+          .slice(-30)
+          .map((x) => String(x).slice(0, 500))
+      : [];
 
-    /*
-      HEMTON system instructions
-    */
+    const memoryText =
+      safeMemory.length > 0
+        ? safeMemory.join("\n")
+        : "(none)";
+
+    // ==========================================
+    // HEMTON SYSTEM PROMPT
+    // ==========================================
     const systemPrompt = `
 You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
 
 Answer naturally, clearly and honestly.
 
-IMPORTANT:
-Return ONLY valid JSON.
-Do not use markdown code fences.
-Do not put any text before or after the JSON.
+You must return ONLY valid JSON.
 
-The JSON must have exactly this structure:
+Do NOT use markdown.
+Do NOT use code fences.
+Do NOT write anything outside the JSON object.
+
+Return exactly this format:
 
 {
-  "reply": "your answer here",
+  "reply": "your answer",
   "memory": []
 }
 
-"reply" must always be a string.
+The "reply" value must be a string.
 
-"memory" must always be an array of strings.
+The "memory" value must be an array of strings.
 
 MEMORY RULES:
-- Remember useful, durable facts about the user.
-- If the user says "remember", save the stated fact.
-- If the user says "forget", remove that fact.
-- Never store passwords, API keys, authentication codes, financial secrets, or other sensitive secrets.
+
+- Remember useful and durable facts about the user.
+- If the user explicitly says "remember", save that fact.
+- If the user explicitly says "forget", remove that fact.
+- Never store passwords.
+- Never store API keys.
+- Never store authentication codes.
+- Never store financial secrets.
 - Never invent personal facts.
 - Do not store ordinary one-time conversation.
 - Keep memory short and useful.
 - Return the complete updated memory list.
 
 CURRENT MEMORY:
-${memoryText || "(none)"}
+${memoryText}
 `;
 
-    /*
-      Call Groq
-    */
+    // ==========================================
+    // CALL GROQ
+    // ==========================================
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -131,7 +149,7 @@ ${memoryText || "(none)"}
         body: JSON.stringify({
           model:
             process.env.GROQ_MODEL ||
-            "llama-3.3-70b-versatile",
+            "openai/gpt-oss-20b",
 
           messages: [
             {
@@ -141,20 +159,28 @@ ${memoryText || "(none)"}
             ...safeMessages
           ],
 
+          // Simple JSON mode.
+          // This avoids the structured-schema/tool
+          // problem from the previous version.
           response_format: {
             type: "json_object"
           },
 
-          temperature: 0.4
+          // GPT-OSS reasoning model + JSON mode.
+          reasoning_format: "hidden",
+
+          temperature: 0.4,
+
+          max_completion_tokens: 2048
         })
       }
     );
 
     const data = await response.json();
 
-    /*
-      Groq error
-    */
+    // ==========================================
+    // GROQ ERROR
+    // ==========================================
     if (!response.ok) {
       console.error(
         "GROQ ERROR:",
@@ -168,9 +194,9 @@ ${memoryText || "(none)"}
       });
     }
 
-    /*
-      Get model response
-    */
+    // ==========================================
+    // GET AI RESPONSE
+    // ==========================================
     const rawText =
       data?.choices?.[0]?.message?.content;
 
@@ -180,48 +206,47 @@ ${memoryText || "(none)"}
       });
     }
 
-    /*
-      Parse JSON
-    */
+    // ==========================================
+    // PARSE JSON
+    // ==========================================
     let result;
 
     try {
       result = JSON.parse(rawText);
     } catch (error) {
       console.error(
-        "JSON parse failed:",
+        "JSON PARSE ERROR:",
         rawText
       );
 
       return res.status(500).json({
-        error:
-          "Could not parse the AI response."
+        error: "Could not parse the AI response."
       });
     }
 
-    /*
-      Clean reply
-    */
+    // ==========================================
+    // CLEAN REPLY
+    // ==========================================
     const reply =
       typeof result.reply === "string" &&
       result.reply.trim()
         ? result.reply.trim()
         : "I didn't get a response.";
 
-    /*
-      Clean memory
-    */
+    // ==========================================
+    // CLEAN MEMORY
+    // ==========================================
     const newMemory =
       Array.isArray(result.memory)
         ? result.memory
             .map((x) => String(x).trim())
             .filter(Boolean)
             .slice(-30)
-        : memory.slice(-30);
+        : safeMemory;
 
-    /*
-      Send result back to HEMTON
-    */
+    // ==========================================
+    // SEND TO FRONTEND
+    // ==========================================
     return res.status(200).json({
       reply,
       memory: newMemory
