@@ -8,9 +8,11 @@ export default async function handler(req, res) {
   try {
     const { messages = [], memory = [] } = req.body || {};
 
-    // ===== SPECIAL GRANDSON RULE =====
+    // ===== LAST MESSAGE =====
 
     const lastMessage = messages[messages.length - 1];
+
+    // ===== SPECIAL GRANDSON RULE =====
 
     if (
       lastMessage &&
@@ -26,7 +28,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // ===== GROQ API KEY =====
     // ===== SPECIAL AUTHOR RULE =====
 
     if (
@@ -42,6 +43,9 @@ export default async function handler(req, res) {
         memory: memory.slice(-30)
       });
     }
+
+    // ===== GROQ API KEY =====
+
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         error: "GROQ_API_KEY is not configured."
@@ -190,53 +194,4 @@ ${memoryText || "(none)"}
       result = JSON.parse(rawText);
     } catch (error) {
       console.error(
-        "JSON parse failed:",
-        rawText
-      );
-
-      return res.status(500).json({
-        error:
-          "Could not parse the AI response."
-      });
-    }
-
-    // ===== REPLY =====
-
-    const reply =
-      typeof result.reply === "string" &&
-      result.reply.trim()
-        ? result.reply.trim()
-        : "I didn't get a response.";
-
-    // ===== UPDATED MEMORY =====
-
-    const newMemory =
-      Array.isArray(result.memory)
-        ? result.memory
-            .map(x =>
-              String(x).trim()
-            )
-            .filter(Boolean)
-            .slice(-30)
-        : memory.slice(-30);
-
-    // ===== SEND RESULT =====
-
-    return res.status(200).json({
-      reply,
-      memory: newMemory
-    });
-
-  } catch (error) {
-
-    console.error(
-      "HEMTON ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      error:
-        "Unexpected server error."
-    });
-  }
-}
+        "
