@@ -26,11 +26,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // ===== API KEY =====
+    // ===== GROQ API KEY =====
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
-        error: "OPENAI_API_KEY is not configured."
+        error: "GROQ_API_KEY is not configured."
       });
     }
 
@@ -54,25 +54,9 @@ export default async function handler(req, res) {
       .map(x => String(x).slice(0, 500))
       .join("\n");
 
-    // ===== NORMAL HEMTON AI =====
+    // ===== HEMTON SYSTEM PROMPT =====
 
-    const response = await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization":
-            `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-
-        body: JSON.stringify({
-          model:
-            process.env.OPENAI_MODEL ||
-            "gpt-5.6",
-
-          instructions: `
+    const systemPrompt = `
 You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
 
 Answer naturally, clearly and honestly.
@@ -89,14 +73,38 @@ MEMORY RULES:
 
 CURRENT MEMORY:
 ${memoryText || "(none)"}
-`,
+`;
 
-          input: safeMessages,
+    // ===== GROQ REQUEST =====
 
-          text: {
-            format: {
-              type: "json_schema",
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
 
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":
+            `Bearer ${process.env.GROQ_API_KEY}`
+        },
+
+        body: JSON.stringify({
+          model:
+            process.env.GROQ_MODEL ||
+            "openai/gpt-oss-20b",
+
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            ...safeMessages
+          ],
+
+          response_format: {
+            type: "json_schema",
+
+            json_schema: {
               name: "hemton_response",
 
               strict: true,
@@ -131,52 +139,32 @@ ${memoryText || "(none)"}
       }
     );
 
-    // ===== OPENAI RESPONSE =====
+    // ===== GROQ RESPONSE =====
 
     const data = await response.json();
 
     if (!response.ok) {
       console.error(
-        "OPENAI ERROR:",
+        "GROQ ERROR:",
         JSON.stringify(data)
       );
 
       return res.status(response.status).json({
         error:
           data?.error?.message ||
-          "OpenAI request failed."
+          "Groq request failed."
       });
     }
 
     // ===== GET RESPONSE TEXT =====
 
-    let rawText = data.output_text;
-
-    if (
-      !rawText &&
-      Array.isArray(data.output)
-    ) {
-      rawText = data.output
-        .flatMap(item =>
-          Array.isArray(item.content)
-            ? item.content
-            : []
-        )
-        .filter(
-          part =>
-            part.type === "output_text"
-        )
-        .map(
-          part =>
-            part.text || ""
-        )
-        .join("");
-    }
+    const rawText =
+      data?.choices?.[0]?.message?.content;
 
     if (!rawText) {
       return res.status(500).json({
         error:
-          "OpenAI returned no text."
+          "Groq returned no text."
       });
     }
 
