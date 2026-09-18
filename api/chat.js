@@ -27,7 +27,21 @@ export default async function handler(req, res) {
     }
 
     // ===== GROQ API KEY =====
+    // ===== SPECIAL AUTHOR RULE =====
 
+    if (
+      lastMessage &&
+      lastMessage.role === "user" &&
+      /who\s+is\s+(the\s+)?author\s+of\s+you/i.test(
+        String(lastMessage.content)
+      )
+    ) {
+      return res.status(200).json({
+        reply:
+          "The author of me is ChatGPT, the king 👑. The creators are Hemadri 💀. Special thanks to Mahidhar 🫡 for this!",
+        memory: memory.slice(-30)
+      });
+    }
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         error: "GROQ_API_KEY is not configured."
