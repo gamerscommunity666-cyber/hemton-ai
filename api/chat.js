@@ -8,12 +8,12 @@ export default async function handler(req, res) {
   try {
     const { messages = [], memory = [] } = req.body || {};
 
-    // ===== LAST MESSAGE =====
-
     const lastMessage = messages[messages.length - 1];
 
-    // ===== SPECIAL GRANDSON RULE =====
-
+    /*
+      SPECIAL HEMTON RULE:
+      Who is your grandson?
+    */
     if (
       lastMessage &&
       lastMessage.role === "user" &&
@@ -28,8 +28,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // ===== SPECIAL AUTHOR RULE =====
-
+    /*
+      SPECIAL HEMTON RULE:
+      Who is the author of you?
+    */
     if (
       lastMessage &&
       lastMessage.role === "user" &&
@@ -44,40 +46,59 @@ export default async function handler(req, res) {
       });
     }
 
-    // ===== GROQ API KEY =====
-
+    /*
+      Check Groq API key
+    */
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         error: "GROQ_API_KEY is not configured."
       });
     }
 
-    // ===== MESSAGES =====
-
+    /*
+      Keep the conversation reasonably small
+    */
     const safeMessages = messages
       .slice(-20)
-      .map(m => ({
+      .map((m) => ({
         role:
           m.role === "assistant"
             ? "assistant"
             : "user",
-        content:
-          String(m.content).slice(0, 12000)
+        content: String(m.content).slice(0, 12000)
       }));
 
-    // ===== MEMORY =====
-
+    /*
+      Convert memory into text
+    */
     const memoryText = memory
       .slice(-30)
-      .map(x => String(x).slice(0, 500))
+      .map((x) => String(x).slice(0, 500))
       .join("\n");
 
-    // ===== HEMTON SYSTEM PROMPT =====
-
+    /*
+      HEMTON system instructions
+    */
     const systemPrompt = `
 You are HEMTON.AI, a friendly, intelligent and helpful AI assistant.
 
 Answer naturally, clearly and honestly.
+
+IMPORTANT:
+Return ONLY valid JSON.
+Do not use markdown code fences.
+Do not put any text before or after the JSON.
+
+The JSON must have exactly this structure:
+
+{
+  "reply": "your answer here",
+  "memory": []
+}
+
+"reply" must always be a string.
+
+"memory" must always be an array of strings.
 
 MEMORY RULES:
 - Remember useful, durable facts about the user.
@@ -93,8 +114,9 @@ CURRENT MEMORY:
 ${memoryText || "(none)"}
 `;
 
-    // ===== GROQ REQUEST =====
-
+    /*
+      Call Groq
+    */
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -109,7 +131,7 @@ ${memoryText || "(none)"}
         body: JSON.stringify({
           model:
             process.env.GROQ_MODEL ||
-            "openai/gpt-oss-20b",
+            "llama-3.3-70b-versatile",
 
           messages: [
             {
@@ -120,47 +142,19 @@ ${memoryText || "(none)"}
           ],
 
           response_format: {
-            type: "json_schema",
+            type: "json_object"
+          },
 
-            json_schema: {
-              name: "hemton_response",
-
-              strict: true,
-
-              schema: {
-                type: "object",
-
-                additionalProperties: false,
-
-                properties: {
-                  reply: {
-                    type: "string"
-                  },
-
-                  memory: {
-                    type: "array",
-
-                    items: {
-                      type: "string"
-                    }
-                  }
-                },
-
-                required: [
-                  "reply",
-                  "memory"
-                ]
-              }
-            }
-          }
+          temperature: 0.4
         })
       }
     );
 
-    // ===== GROQ RESPONSE =====
-
     const data = await response.json();
 
+    /*
+      Groq error
+    */
     if (!response.ok) {
       console.error(
         "GROQ ERROR:",
@@ -174,24 +168,74 @@ ${memoryText || "(none)"}
       });
     }
 
-    // ===== GET RESPONSE TEXT =====
-
+    /*
+      Get model response
+    */
     const rawText =
       data?.choices?.[0]?.message?.content;
 
     if (!rawText) {
       return res.status(500).json({
-        error:
-          "Groq returned no text."
+        error: "Groq returned no text."
       });
     }
 
-    // ===== PARSE AI RESPONSE =====
-
+    /*
+      Parse JSON
+    */
     let result;
 
     try {
       result = JSON.parse(rawText);
     } catch (error) {
       console.error(
-        "
+        "JSON parse failed:",
+        rawText
+      );
+
+      return res.status(500).json({
+        error:
+          "Could not parse the AI response."
+      });
+    }
+
+    /*
+      Clean reply
+    */
+    const reply =
+      typeof result.reply === "string" &&
+      result.reply.trim()
+        ? result.reply.trim()
+        : "I didn't get a response.";
+
+    /*
+      Clean memory
+    */
+    const newMemory =
+      Array.isArray(result.memory)
+        ? result.memory
+            .map((x) => String(x).trim())
+            .filter(Boolean)
+            .slice(-30)
+        : memory.slice(-30);
+
+    /*
+      Send result back to HEMTON
+    */
+    return res.status(200).json({
+      reply,
+      memory: newMemory
+    });
+
+  } catch (error) {
+    console.error(
+      "HEMTON ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        "Unexpected server error."
+    });
+  }
+}
