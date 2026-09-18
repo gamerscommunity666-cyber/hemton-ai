@@ -63,10 +63,12 @@ function save() {
   );
 
   if (activeChatId) {
+
     localStorage.setItem(
       "hemton_active_chat",
       activeChatId
     );
+
   }
 }
 
@@ -102,11 +104,19 @@ function createChat() {
       .slice(2);
 
   const newChat = {
+
     id,
+
     title: "New chat",
+
     messages: [],
+
     memory: [],
-    createdAt: Date.now()
+
+    createdAt: Date.now(),
+
+    updatedAt: Date.now()
+
   };
 
   chats.unshift(newChat);
@@ -114,11 +124,13 @@ function createChat() {
   activeChatId = id;
 
   messages = [];
+
   memory = [];
 
   save();
 
   render();
+
   renderHistory();
 
   return newChat;
@@ -158,6 +170,9 @@ function saveCurrentChat() {
   current.memory =
     [...memory];
 
+  current.updatedAt =
+    Date.now();
+
   if (messages.length > 0) {
 
     const firstUserMessage =
@@ -176,9 +191,13 @@ function saveCurrentChat() {
       if (
         firstUserMessage.content.length > 40
       ) {
+
         current.title += "…";
+
       }
+
     }
+
   }
 
   save();
@@ -215,6 +234,8 @@ function loadChat(id) {
   save();
 
   render();
+
+  renderHistory();
 
   closeHistory();
 }
@@ -321,15 +342,19 @@ function renderHistory() {
     if (
       item.id === activeChatId
     ) {
+
       button.style.borderColor =
         "rgba(110,245,210,.45)";
 
       button.style.background =
         "rgba(110,245,210,.08)";
+
     }
 
     button.onclick = () => {
+
       loadChat(item.id);
+
     };
 
     historyList.appendChild(
@@ -344,11 +369,19 @@ function renderHistory() {
 
 function openHistory() {
 
+  if (!sidebar) {
+    return;
+  }
+
   sidebar.classList.add("open");
 
-  sidebarOverlay.classList.add(
-    "open"
-  );
+  if (sidebarOverlay) {
+
+    sidebarOverlay.classList.add(
+      "open"
+    );
+
+  }
 
   renderHistory();
 }
@@ -359,13 +392,21 @@ function openHistory() {
 
 function closeHistory() {
 
-  sidebar.classList.remove(
-    "open"
-  );
+  if (sidebar) {
 
-  sidebarOverlay.classList.remove(
-    "open"
-  );
+    sidebar.classList.remove(
+      "open"
+    );
+
+  }
+
+  if (sidebarOverlay) {
+
+    sidebarOverlay.classList.remove(
+      "open"
+    );
+
+  }
 }
 
 /* =========================================================
@@ -377,16 +418,20 @@ if (historyBtn) {
   historyBtn.onclick = () => {
 
     if (
-      sidebar.classList.contains(
-        "open"
-      )
+      sidebar &&
+      sidebar.classList.contains("open")
     ) {
+
       closeHistory();
+
     } else {
+
       openHistory();
+
     }
 
   };
+
 }
 
 /* =========================================================
@@ -433,8 +478,12 @@ function startNewChat() {
 
 /* Top-right + */
 
-clearBtn.onclick =
-  startNewChat;
+if (clearBtn) {
+
+  clearBtn.onclick =
+    startNewChat;
+
+}
 
 /* Sidebar + New chat */
 
@@ -442,7 +491,6 @@ if (sidebarNewChat) {
 
   sidebarNewChat.onclick =
     startNewChat;
-
 }
 
 /* =========================================================
@@ -463,7 +511,9 @@ async function send(text) {
   */
 
   if (!activeChatId) {
+
     createChat();
+
   }
 
   add(
@@ -550,6 +600,7 @@ async function send(text) {
           imageData.error ||
           "Image generation failed."
         );
+
       }
 
       add(
@@ -610,14 +661,17 @@ async function send(text) {
 
           body:
             JSON.stringify({
+
               messages:
                 messages.slice(-20),
 
               memory:
                 memory.slice(-30)
+
             })
           }
-        );
+        }
+      );
 
     const data =
       await res.json();
@@ -628,6 +682,7 @@ async function send(text) {
         data.error ||
         "Server error"
       );
+
     }
 
     add(
@@ -680,7 +735,9 @@ async function send(text) {
       sigma &&
       sigma.isConnected
     ) {
+
       sigma.remove();
+
     }
 
     sendBtn.disabled =
@@ -688,6 +745,7 @@ async function send(text) {
 
     status.textContent =
       "";
+
   }
 }
 
@@ -762,7 +820,9 @@ function speak(text) {
       in window
     )
   ) {
+
     return;
+
   }
 
   speechSynthesis.cancel();
@@ -856,9 +916,8 @@ if (SR) {
    ========================================================= */
 
 /*
-   If old messages exist but there are no
-   chat-history records, migrate them into
-   the first conversation.
+   Migrate the existing conversation into
+   chat history without losing any messages.
 */
 
 if (
@@ -866,53 +925,102 @@ if (
   messages.length
 ) {
 
-  createChat();
+  const oldMessages =
+    [...messages];
 
-  /*
-    createChat() clears messages,
-    so restore the old conversation.
-  */
+  const oldMemory =
+    [...memory];
 
-  const migrated =
-    getActiveChat();
+  const id =
+    Date.now().toString() +
+    Math.random()
+      .toString(36)
+      .slice(2);
 
-  if (migrated) {
+  const firstUser =
+    oldMessages.find(
+      m => m.role === "user"
+    );
 
-    migrated.messages =
-      [...messages];
+  let title =
+    "New chat";
 
-    migrated.memory =
-      [...memory];
+  if (firstUser) {
 
-    const firstUser =
-      messages.find(
-        m => m.role === "user"
-      );
+    title =
+      firstUser.content
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 40);
 
-    if (firstUser) {
+    if (
+      firstUser.content.length > 40
+    ) {
 
-      migrated.title =
-        firstUser.content
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 40);
+      title += "…";
 
     }
 
-    messages =
-      [...migrated.messages];
-
-    memory =
-      [...migrated.memory];
-
-    save();
   }
+
+  chats.unshift({
+
+    id,
+
+    title,
+
+    messages:
+      oldMessages,
+
+    memory:
+      oldMemory,
+
+    createdAt:
+      Date.now(),
+
+    updatedAt:
+      Date.now()
+
+  });
+
+  activeChatId =
+    id;
+
+  save();
+}
+
+/*
+   If an active chat exists,
+   load its saved messages.
+*/
+
+if (
+  activeChatId &&
+  getActiveChat()
+) {
+
+  const active =
+    getActiveChat();
+
+  messages =
+    Array.isArray(
+      active.messages
+    )
+      ? [...active.messages]
+      : [];
+
+  memory =
+    Array.isArray(
+      active.memory
+    )
+      ? [...active.memory]
+      : [];
 
 }
 
 /*
-   If there is no active chat,
-   keep the welcome screen clean.
+   If the saved active chat
+   no longer exists, reset safely.
 */
 
 if (
@@ -927,8 +1035,16 @@ if (
 
   memory = [];
 
+  localStorage.removeItem(
+    "hemton_active_chat"
+  );
+
   save();
 }
+
+/* =========================================================
+   START HEMTON
+   ========================================================= */
 
 render();
 
