@@ -8,38 +8,164 @@
   <link rel="stylesheet" href="/style.css">
   <title>HEMTON.AI</title>
 </head>
+
 <body>
+
   <div class="app">
+
+    <!-- ===== TOP BAR ===== -->
+
     <header class="topbar">
+
+      <button
+        id="historyBtn"
+        class="icon-btn history-btn"
+        title="Chat history"
+      >
+        ☰
+      </button>
+
       <div class="brand">
         <div class="logo">H</div>
-        <div><strong>HEMTON</strong><span>.AI</span><small>Your AI assistant</small></div>
+
+        <div>
+          <strong>HEMTON</strong><span>.AI</span>
+          <small>Your AI assistant</small>
+        </div>
       </div>
-      <button id="clearBtn" class="icon-btn" title="New chat">＋</button>
+
+      <button
+        id="clearBtn"
+        class="icon-btn"
+        title="New chat"
+      >
+        ＋
+      </button>
+
     </header>
 
-    <main id="chat" class="chat">
-      <section id="welcome" class="welcome">
-        <div class="orb"><span>H</span></div>
-        <h1>How can I help?</h1>
-        <p>Chat with Hemton, use your voice, and keep your conversations on this device.</p>
-        <div class="suggestions">
-          <button>Explain something simply</button>
-          <button>Help me plan my day</button>
-          <button>Write something for me</button>
+
+    <!-- ===== CHAT HISTORY SIDEBAR ===== -->
+
+    <aside id="sidebar" class="sidebar">
+
+      <div class="sidebar-header">
+        <strong>Chat history</strong>
+
+        <button
+          id="closeSidebar"
+          class="sidebar-close"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+
+      <button id="sidebarNewChat" class="new-chat-btn">
+        ＋ New chat
+      </button>
+
+      <div id="historyList" class="history-list">
+        <div class="history-empty">
+          Your conversations will appear here.
         </div>
+      </div>
+
+    </aside>
+
+
+    <!-- ===== SIDEBAR OVERLAY ===== -->
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+
+    <!-- ===== CHAT ===== -->
+
+    <main id="chat" class="chat">
+
+      <section id="welcome" class="welcome">
+
+        <div class="orb">
+          <span>H</span>
+        </div>
+
+        <h1>How can I help?</h1>
+
+        <p>
+          Chat with Hemton, use your voice,
+          and keep your conversations on this device.
+        </p>
+
+        <div class="suggestions">
+
+          <button>
+            Explain something simply
+          </button>
+
+          <button>
+            Help me plan my day
+          </button>
+
+          <button>
+            Write something for me
+          </button>
+
+        </div>
+
       </section>
+
     </main>
 
-    <div id="status" class="status" aria-live="polite"></div>
+
+    <!-- ===== STATUS ===== -->
+
+    <div
+      id="status"
+      class="status"
+      aria-live="polite"
+    ></div>
+
+
+    <!-- ===== COMPOSER ===== -->
 
     <form id="composer" class="composer">
-      <textarea id="prompt" rows="1" placeholder="Message Hemton..." autocomplete="off"></textarea>
-      <button type="button" id="micBtn" class="round" title="Voice input">🎙️</button>
-      <button type="submit" id="sendBtn" class="send round" title="Send">➤</button>
+
+      <textarea
+        id="prompt"
+        rows="1"
+        placeholder="Message Hemton..."
+        autocomplete="off"
+      ></textarea>
+
+      <button
+        type="button"
+        id="micBtn"
+        class="round"
+        title="Voice input"
+      >
+        🎙️
+      </button>
+
+      <button
+        type="submit"
+        id="sendBtn"
+        class="send round"
+        title="Send"
+      >
+        ➤
+      </button>
+
     </form>
-    <div class="footer">Hemton can make mistakes. Check important information.</div>
+
+
+    <div class="footer">
+      Hemton can make mistakes. Check important information.
+    </div>
+
   </div>
+
+
   <script src="/app.js"></script>
+
 </body>
 </html>
